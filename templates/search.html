@@ -36,7 +36,7 @@
                         {% for result in results %}
                             <li>
                                 <p>
-                                    <a href="/{{result.isbn}}">{{ result.title }}</a><br>
+                                    <a href="book/{{result.isbn}}">{{ result.title }}</a><br>
                                     Written by {{ result.author }} in the year of {{ result.year }}<br>
                                     <a href="/{{result.isbn}}">ISBN: {{ result.isbn }}</a>
                                 </p>

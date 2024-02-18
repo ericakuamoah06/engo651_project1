@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import text
 
-engine = create_engine(("postgresql://postgres:hideurs06@localhost:5432/postgres"))
+engine = create_engine('postgresql://postgres:hideurs06@localhost:5432/postgres')
 db = scoped_session(sessionmaker(bind=engine))
 
 def main():

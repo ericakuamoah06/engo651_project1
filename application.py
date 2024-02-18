@@ -19,7 +19,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Set up database
-engine = create_engine(("postgresql://postgres:hideurs06@localhost:5432/postgres"))
+engine = create_engine('postgresql://postgres:hideurs06@localhost:5432/postgres')
 db = scoped_session(sessionmaker(bind=engine))
 
 @app.route("/")
@@ -39,15 +39,29 @@ def login():
         flash("Error: Username or password cannot be empty.")
         return render_template("index.html")
     # Verify username and password against database
-    user = db.execute(text("SELECT * FROM users WHERE username = :username"), {"username": username}).fetchone()
-    if user and user["password"] == password:
-        session['username'] = username
-        flash("Logged in successfully.")
-        return render_template("search.html", username=username)
+    # user = db.execute(text("SELECT * FROM users WHERE username = :username"), {"username": username}).fetchone()
+    user = db.execute(text("SELECT * FROM users WHERE (username=:username)"),{"username": username}).fetchone()
+    match = db.execute(text("SELECT * FROM users WHERE username=:username AND password=:password"),{"username":username, "password":password}).fetchone()
+    # if user and user["password"] == password:
+    #     session['username'] = username
+    #     flash("Logged in successfully.")
+    #     return render_template("search.html", username=username)
+    # else:
+    #     flash("Error: Invalid username or password.")
+    #     return render_template("index.html")
+
+    if user is not None:
+        if match is not None:
+            session['username'] = username
+            flash("Logged in successfully.")
+            return render_template("search.html", username=username)
+        else:
+            flash("Error: Invalid Username")
+            return render_template("index.html")
     else:
         flash("Error: Invalid username or password.")
         return render_template("index.html")
-
+    
 @app.route("/register_form", methods=['GET'])
 def register_form():
     # Display the registration form
@@ -84,7 +98,7 @@ def search():
     books = db.execute(text("SELECT * FROM books WHERE title LIKE :query OR author LIKE :query OR isbn LIKE :query"), {"query": query}).fetchall()
     return render_template('search.html', results=books, username=session.get('username'))
 
-@app.route("/<isbn>", methods=['GET', 'POST'])
+@app.route("/book/<isbn>", methods=['GET', 'POST'])
 def book(isbn):
     # Display book details and process new reviews
     book_details = db.execute(text("SELECT * FROM books WHERE isbn = :isbn"), {"isbn": isbn}).fetchone()
@@ -95,4 +109,6 @@ def book(isbn):
         db.execute(text("INSERT INTO reviews (username, isbn, comment, rating) VALUES (:username, :isbn, :comment, :rating)"), {"username": session['username'], "isbn": isbn, "comment": comment, "rating": rating})
         db.commit()
         flash('Review submitted!')
+        reviews = db.execute(text("SELECT username, comment, rating FROM reviews WHERE isbn = :isbn"), {"isbn": isbn}).fetchall()
+        return render_template("book.html", book=book_details, reviews=reviews, username=session['username'])
     return render_template("book.html", book=book_details, reviews=reviews, username=session['username'])
